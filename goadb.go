@@ -23,10 +23,10 @@ func newAdbError(msg string) *AdbError {
 }
 
 const (
-	Unknown string = "Unknown"
-	Empty   string = ""
-	MODE_RECOVERY = "recovery"
-	MODE_BOOTLOADER = "bootloader"
+	Unknown         string = "Unknown"
+	Empty           string = ""
+	MODE_RECOVERY          = "recovery"
+	MODE_BOOTLOADER        = "bootloader"
 )
 
 var (
@@ -223,11 +223,11 @@ func (g *GoAdb) Reboot() (string, error) {
 	return g.runAdb("reboot")
 }
 
-// RebootTo like command 
-// "reboot [bootloader|recovery]" 
+// RebootTo like command
+// "reboot [bootloader|recovery]"
 // "to" can be MODE_BOOTLOADER or MODE_RECOVERY
 func (g *GoAdb) RebootTo(to string) (string, error) {
-	return g.runAdb("reboot", to)	
+	return g.runAdb("reboot", to)
 }
 
 // run adb cmd string
@@ -260,8 +260,9 @@ func (g *GoAdb) runAdb(cmd ...string) (string, error) {
 
 	if err := adbExec.Wait(); err != nil {
 		if _, ok := err.(*exec.ExitError); ok {
-			adbError = newAdbError("adb return error")
 			outData = errorData
+			s := string(errorData)
+			adbError = newAdbError(s)
 		} else {
 			return Empty, errors.New("start adb process error")
 		}
