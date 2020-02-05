@@ -144,7 +144,7 @@ func (g *GoAdb) Devices() []*Device {
 	return devices
 }
 
-// Install Apk
+// Install Apk DEPRICATED
 //  adb install [-l] [-r] [-d] [-s]
 func (g *GoAdb) Install(apk string, reinstall bool,
 	forward bool, downgrade bool, toSd bool) (string, error) {
@@ -165,6 +165,29 @@ func (g *GoAdb) Install(apk string, reinstall bool,
 	args += " " + apk
 
 	result, isError := g.runAdbCmd("install" + args)
+
+	return result, isError
+}
+
+// Install Apk
+//  adb install [-l] [-r] [-d] [-s]
+func (g *GoAdb) InstallAPK(apk string, reinstall bool,
+	forward bool, downgrade bool, toSd bool) (string, error) {
+	var args string
+	if reinstall {
+		args += " -r"
+	}
+	if forward {
+		args += " -l"
+	}
+	if downgrade {
+		args += " -d"
+	}
+	if toSd {
+		args += " -s"
+	}
+
+	result, isError := g.runAdbCmdInstall("install"+args, apk)
 
 	return result, isError
 }
@@ -233,6 +256,12 @@ func (g *GoAdb) RebootTo(to string) (string, error) {
 // run adb cmd string
 func (g *GoAdb) runAdbCmd(cmd string) (string, error) {
 	cmdArgs := strings.Split(cmd, " ")
+	return g.runAdb(cmdArgs...)
+}
+
+func (g *GoAdb) runAdbCmdInstall(cmd string, apk string) (string, error) {
+	cmdArgs := strings.Split(cmd, " ")
+	cmdArgs = append(cmdArgs, apk)
 	return g.runAdb(cmdArgs...)
 }
 
