@@ -34,6 +34,11 @@ var (
 	Debug bool = false
 )
 
+type DeviceInterface interface {
+	newDevice() *Device
+	GetDeviceId() string
+}
+
 // A connected Android Device
 type Device struct {
 	deviceId string
@@ -62,9 +67,19 @@ func (d *Device) GetStatus() string {
 
 // Create a Adb
 func NewGoAdb(adbPath string) *GoAdb {
-	adb := new(GoAdb)
-	adb.adbPath = adbPath
-	adb.init()
+	var adb GoAdbInterface
+	adb = &GoAdb{}
+	adb.(*GoAdb).adbPath = adbPath
+	adb.(*GoAdb).init()
+	return adb.(*GoAdb)
+}
+
+// Create a Adb
+func NewGoAdbInt(adbPath string) GoAdbInterface {
+	var adb GoAdbInterface
+	adb = &GoAdb{}
+	adb.(*GoAdb).adbPath = adbPath
+	adb.(*GoAdb).init()
 	return adb
 }
 
@@ -77,6 +92,28 @@ func NewGoAdbWithEnv() (*GoAdb, error) {
 	} else {
 		return nil, errors.New("ANDROID_HOME not exists in Env")
 	}
+}
+
+type GoAdbInterface interface {
+	GetConnectedDevice() []*Device
+	SetAdbPath(string)
+	GetAdbPath() string
+	Version() string
+	Install(apk string, reinstall bool,
+		forward bool, downgrade bool, toSd bool) (string, error)
+	InstallAPK(apk string, reinstall bool,
+		forward bool, downgrade bool, toSd bool) (string, error)
+	Uninstall(pkg string, keepData bool) (string, error)
+	ShellCmd(cmd string) (string, error)
+	ShellCmdWithDevice(cmd string, device string) (string, error)
+	Push(src string, dst string) error
+	Pull(src string, dst string) error
+	KillServer() (string, error)
+	StartServer() (string, error)
+	Reboot() (string, error)
+	runAdbCmd(cmd string) (string, error)
+	runAdbCmdInstall(cmd string, apk string) (string, error)
+	runAdb(cmd ...string) (string, error)
 }
 
 type GoAdb struct {
@@ -212,6 +249,13 @@ func (g *GoAdb) ShellCmd(cmd string) (string, error) {
 	return result, err
 }
 
+// Run command by Adb shell with a specified device
+// adb shell $cmd
+func (g *GoAdb) ShellCmdWithDevice(cmd string, device string) (string, error) {
+	result, err := g.runAdbCmd("-s " + device + " shell " + cmd)
+	return result, err
+}
+
 // Push file to phone
 // src is the file path on compute, and dst is the path in phone
 func (g *GoAdb) Push(src string, dst string) error {
@@ -256,6 +300,7 @@ func (g *GoAdb) RebootTo(to string) (string, error) {
 // run adb cmd string
 func (g *GoAdb) runAdbCmd(cmd string) (string, error) {
 	cmdArgs := strings.Split(cmd, " ")
+	fmt.Println(cmdArgs)
 	return g.runAdb(cmdArgs...)
 }
 
